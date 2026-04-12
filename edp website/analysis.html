@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analysis — Spotify EDA 2024</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green:#1DB954; --green-dim:#17a349;
+    --bg:#0a0a0a; --bg2:#111111; --bg3:#1a1a1a;
+    --border:rgba(255,255,255,0.07);
+    --text:#f0f0f0; --muted:#888;
+    --accent1:#FF6B6B; --accent2:#4A90D9; --accent3:#FFB347;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; }
+
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 48px;
+    background:rgba(10,10,10,0.85); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:var(--green); letter-spacing:-0.5px; }
+  .nav-logo span { color:var(--text); }
+  .nav-links { display:flex; gap:36px; list-style:none; }
+  .nav-links a { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:color 0.2s; }
+  .nav-links a:hover { color:var(--text); }
+  .nav-links a.active { color:var(--green); }
+
+  .page-header {
+    padding: 160px 48px 80px;
+    max-width: 1200px; margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-label { font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:16px; }
+  .page-title { font-family:'Syne',sans-serif; font-size:clamp(32px,5vw,64px); font-weight:800; letter-spacing:-2px; line-height:1.05; margin-bottom:20px; }
+  .page-desc { font-size:17px; color:var(--muted); max-width:600px; line-height:1.7; font-weight:300; }
+
+  /* ANALYSIS SECTIONS */
+  .analysis-block {
+    max-width:1200px; margin:0 auto;
+    padding:80px 48px;
+    border-bottom:1px solid var(--border);
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:80px; align-items:start;
+  }
+  .analysis-block.reverse { direction:rtl; }
+  .analysis-block.reverse > * { direction:ltr; }
+  .analysis-block.full { grid-template-columns:1fr; gap:40px; }
+
+  .block-label { font-size:11px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .block-title { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; letter-spacing:-0.8px; margin-bottom:16px; line-height:1.2; }
+  .block-text { font-size:15px; color:var(--muted); line-height:1.8; font-weight:300; margin-bottom:20px; }
+
+  .insight-list { list-style:none; display:flex; flex-direction:column; gap:14px; margin-top:8px; }
+  .insight-list li {
+    display:flex; align-items:flex-start; gap:12px;
+    font-size:14px; color:var(--muted); line-height:1.6;
+  }
+  .insight-list li::before {
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:var(--green); flex-shrink:0; margin-top:7px;
+  }
+  .insight-list li strong { color:var(--text); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .code-header {
+    padding:12px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px;
+  }
+  .code-dot { width:10px; height:10px; border-radius:50%; }
+  .code-lang { font-size:12px; color:var(--muted); margin-left:auto; }
+  .code-body { padding:24px; font-family:monospace; font-size:13px; line-height:1.8; overflow-x:auto; }
+  .kw  { color:#FF6B6B; }
+  .fn  { color:#4A90D9; }
+  .st  { color:#1DB954; }
+  .cm  { color:#555; font-style:italic; }
+  .nm  { color:#FFB347; }
+
+  /* METRICS TABLE */
+  .metrics-table { width:100%; border-collapse:collapse; margin-top:24px; }
+  .metrics-table th {
+    text-align:left; padding:12px 16px;
+    font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--muted); border-bottom:1px solid var(--border);
+    font-weight:500;
+  }
+  .metrics-table td {
+    padding:16px 16px; font-size:14px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+  }
+  .metrics-table tr:last-child td { border-bottom:none; }
+  .metrics-table .val { color:var(--green); font-family:'Syne',sans-serif; font-weight:700; font-size:18px; }
+  .metrics-table .desc { color:var(--muted); font-size:13px; line-height:1.6; }
+
+  /* PHASE TIMELINE */
+  .timeline { position:relative; padding-left:32px; margin-top:40px; }
+  .timeline::before {
+    content:''; position:absolute; left:8px; top:8px; bottom:8px;
+    width:2px; background:var(--border);
+  }
+  .tl-item { position:relative; margin-bottom:40px; }
+  .tl-dot {
+    position:absolute; left:-28px; top:4px;
+    width:16px; height:16px; border-radius:50%;
+    background:var(--bg); border:2px solid var(--green);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tl-dot.done { background:var(--green); }
+  .tl-phase { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-bottom:6px; font-weight:500; }
+  .tl-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:8px; }
+  .tl-text { font-size:14px; color:var(--muted); line-height:1.7; }
+
+  .reveal { opacity:0; transform:translateY(30px); transition:opacity 0.6s ease,transform 0.6s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  footer {
+    border-top:1px solid var(--border); padding:48px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;
+  }
+  footer .footer-left { font-size:14px; color:var(--muted); }
+  footer .footer-left strong { color:var(--text); }
+  .footer-team { display:flex; gap:20px; flex-wrap:wrap; }
+  .team-chip { background:var(--bg2); border:1px solid var(--border); border-radius:100px; padding:8px 16px; font-size:13px; color:var(--muted); }
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--bg3); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">SPOTIFY<span> EDA</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="analysis.html" class="active">Analysis</a></li>
+    <li><a href="graphs.html">Graphs</a></li>
+    <li><a href="about.html">About</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="page-label">Methodology & Findings</div>
+  <h1 class="page-title">Full Analysis<br/>Breakdown</h1>
+  <p class="page-desc">A complete walkthrough of our data preprocessing, exploratory analysis, and key statistical findings — with code snippets from our Jupyter Notebook.</p>
+</div>
+
+<!-- PREPROCESSING -->
+<div class="analysis-block reveal">
+  <div>
+    <div class="block-label">Phase 1 — Data Preprocessing</div>
+    <h2 class="block-title">Cleaning & preparing the dataset</h2>
+    <p class="block-text">The raw dataset contained mixed data types, missing values, and encoding issues (special characters in non-English artist names). We handled all of these before any analysis.</p>
+    <ul class="insight-list">
+      <li><strong>Shape:</strong> 4,600 rows × 29 columns after loading</li>
+      <li><strong>Missing values:</strong> Numeric stream columns had ~12% nulls — filled with 0 for aggregation, dropped for ratio calculations</li>
+      <li><strong>Encoding:</strong> Used <code>latin-1</code> encoding to handle special characters in track/artist names</li>
+      <li><strong>Type conversion:</strong> Stream columns stored as strings with commas — converted to numeric using <code>pd.to_numeric</code></li>
+      <li><strong>NumPy stats:</strong> Used <code>np.percentile</code> and <code>np.median</code> for outlier detection and normalization</li>
+    </ul>
+  </div>
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dot" style="background:#FF6B6B"></div>
+      <div class="code-dot" style="background:#FFB347"></div>
+      <div class="code-dot" style="background:#1DB954"></div>
+      <span class="code-lang">Python</span>
+    </div>
+    <div class="code-body">
+<span class="cm"># Load dataset</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+df = pd.<span class="fn">read_csv</span>(<span class="st">'spotify_2024.csv'</span>,
+          encoding=<span class="st">'latin-1'</span>)
+
+<span class="cm"># Clean stream columns</span>
+cols = [<span class="st">'Spotify Streams'</span>,
+        <span class="st">'YouTube Views'</span>,
+        <span class="st">'TikTok Views'</span>]
+
+<span class="kw">for</span> col <span class="kw">in</span> cols:
+  df[col] = pd.<span class="fn">to_numeric</span>(
+    df[col].<span class="fn">str.replace</span>(<span class="st">','</span>,<span class="st">''</span>),
+    errors=<span class="st">'coerce'</span>
+  )
+
+<span class="cm"># Check nulls</span>
+<span class="fn">print</span>(df.<span class="fn">isnull</span>().<span class="fn">sum</span>())
+
+<span class="cm"># NumPy: outlier cap at 95th %ile</span>
+cap = np.<span class="fn">percentile</span>(
+  df[<span class="st">'Spotify Streams'</span>].<span class="fn">dropna</span>(), <span class="nm">95</span>
+)
+    </div>
+  </div>
+</div>
+
+<!-- EDA -->
+<div class="analysis-block reverse reveal">
+  <div>
+    <div class="block-label">Phase 2 — Exploratory Data Analysis</div>
+    <h2 class="block-title">Descriptive statistics & patterns</h2>
+    <p class="block-text">We computed key statistics across all platform columns and identified the major trends in the data using groupby aggregations.</p>
+    <table class="metrics-table">
+      <tr><th>Metric</th><th>Value</th><th>Insight</th></tr>
+      <tr>
+        <td>Mean Spotify Streams</td>
+        <td class="val">436M</td>
+        <td class="desc">Average per song — heavily skewed by viral hits</td>
+      </tr>
+      <tr>
+        <td>Median Spotify Streams</td>
+        <td class="val">117M</td>
+        <td class="desc">Median is much lower — most songs are mid-tier</td>
+      </tr>
+      <tr>
+        <td>Max Streams (single song)</td>
+        <td class="val">4.28B</td>
+        <td class="desc">Blinding Lights — The Weeknd</td>
+      </tr>
+      <tr>
+        <td>Collaboration tracks</td>
+        <td class="val">671</td>
+        <td class="desc">14.6% of all songs are collabs</td>
+      </tr>
+      <tr>
+        <td>Most common language</td>
+        <td class="val">English</td>
+        <td class="desc">1,859 tracks — 40.4% of dataset</td>
+      </tr>
+    </table>
+  </div>
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dot" style="background:#FF6B6B"></div>
+      <div class="code-dot" style="background:#FFB347"></div>
+      <div class="code-dot" style="background:#1DB954"></div>
+      <span class="code-lang">Python</span>
+    </div>
+    <div class="code-body">
+<span class="cm"># Descriptive statistics</span>
+<span class="fn">print</span>(df[<span class="st">'Spotify Streams'</span>]
+  .<span class="fn">describe</span>())
+
+<span class="cm"># Groupby: streams per artist</span>
+artist_stats = df.<span class="fn">groupby</span>(
+  <span class="st">'Artist'</span>
+).<span class="fn">agg</span>(
+  total=(<span class="st">'Spotify Streams'</span>,<span class="st">'sum'</span>),
+  songs=(<span class="st">'Track'</span>,<span class="st">'count'</span>),
+  avg  =(<span class="st">'Spotify Streams'</span>,<span class="st">'mean'</span>)
+).<span class="fn">sort_values</span>(
+  <span class="st">'total'</span>, ascending=<span class="kw">False</span>
+)
+
+<span class="cm"># Pattern: release month vs streams</span>
+df[<span class="st">'Month'</span>] = pd.<span class="fn">to_datetime</span>(
+  df[<span class="st">'Release Date'</span>]
+).dt.month
+
+monthly = df.<span class="fn">groupby</span>(
+  <span class="st">'Month'</span>
+)[<span class="st">'Spotify Streams'</span>].<span class="fn">mean</span>()
+    </div>
+  </div>
+</div>
+
+<!-- METHODOLOGY TIMELINE -->
+<div class="analysis-block full reveal">
+  <div>
+    <div class="block-label">Project Phases</div>
+    <h2 class="block-title">How we built this project</h2>
+    <p class="block-text">A step-by-step breakdown of our methodology from data loading to final visualizations.</p>
+  </div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-phase">Phase 1</div>
+      <div class="tl-title">Dataset Selection & Loading</div>
+      <div class="tl-text">Downloaded Most Streamed Spotify Songs 2024 from Kaggle. Loaded into Pandas with latin-1 encoding. Verified shape (4,600 × 29) and previewed all column names and data types.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-phase">Phase 2</div>
+      <div class="tl-title">Data Preprocessing</div>
+      <div class="tl-text">Cleaned numeric columns stored as comma-separated strings. Handled ~12% missing values in stream columns. Used NumPy for percentile-based outlier detection and MinMaxScaler for normalization.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-phase">Phase 3</div>
+      <div class="tl-title">Exploratory Data Analysis</div>
+      <div class="tl-text">Computed descriptive statistics (mean, median, std, percentiles). Used groupby aggregations for artist-level, album-level and month-level analysis. Identified key trends in platform behavior and release timing.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-phase">Phase 4</div>
+      <div class="tl-title">Feature Engineering</div>
+      <div class="tl-text">Extracted featured artists from track names using regex. Detected song language using the langdetect library. Created composite loyalty index from weighted platform engagement ratios. Derived release month, day and year from date column.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-phase">Phase 5</div>
+      <div class="tl-title">Visualization</div>
+      <div class="tl-text">Built 9 charts using Matplotlib and Seaborn — including scatter plots, animated bar races, pie charts, multi-line timelines and horizontal bar charts. All charts saved as PNG and embedded in this website.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left"><strong>Music Streaming Trends EDA</strong><br/>EDA Using Python · Batch 2025–29</div>
+  <div class="footer-team">
+    <span class="team-chip">Drishti Heda</span>
+    <span class="team-chip">Jayvee Shah</span>
+    <span class="team-chip">Jui Dixit</span>
+    <span class="team-chip">Krish Joshi</span>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

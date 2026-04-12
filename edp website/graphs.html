@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Graphs — Spotify EDA 2024</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green:#1DB954; --green-dim:#17a349;
+    --bg:#0a0a0a; --bg2:#111111; --bg3:#1a1a1a;
+    --border:rgba(255,255,255,0.07);
+    --text:#f0f0f0; --muted:#888;
+    --accent1:#FF6B6B; --accent2:#4A90D9; --accent3:#FFB347;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; }
+
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 48px;
+    background:rgba(10,10,10,0.85); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:var(--green); letter-spacing:-0.5px; }
+  .nav-logo span { color:var(--text); }
+  .nav-links { display:flex; gap:36px; list-style:none; }
+  .nav-links a { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:color 0.2s; }
+  .nav-links a:hover { color:var(--text); }
+  .nav-links a.active { color:var(--green); }
+
+  .page-header {
+    padding:160px 48px 60px;
+    max-width:1200px; margin:0 auto;
+    border-bottom:1px solid var(--border);
+  }
+  .page-label { font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:16px; }
+  .page-title { font-family:'Syne',sans-serif; font-size:clamp(32px,5vw,64px); font-weight:800; letter-spacing:-2px; line-height:1.05; margin-bottom:20px; }
+  .page-desc { font-size:17px; color:var(--muted); max-width:600px; line-height:1.7; font-weight:300; }
+
+  /* FILTER TABS */
+  .filter-bar {
+    max-width:1200px; margin:0 auto;
+    padding:32px 48px 0;
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .filter-btn {
+    background:var(--bg2); border:1px solid var(--border);
+    color:var(--muted); font-size:13px; font-weight:500;
+    padding:8px 20px; border-radius:100px;
+    cursor:pointer; transition:all 0.2s;
+    font-family:'DM Sans',sans-serif;
+  }
+  .filter-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+  .filter-btn.active { background:rgba(29,185,84,0.12); border-color:rgba(29,185,84,0.4); color:var(--green); }
+
+  /* GRAPHS GRID */
+  .graphs-grid {
+    max-width:1200px; margin:0 auto;
+    padding:40px 48px 100px;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:24px;
+  }
+  .graph-card {
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    transition:border-color 0.2s, transform 0.2s;
+    cursor:pointer;
+  }
+  .graph-card:hover { border-color:rgba(255,255,255,0.15); transform:translateY(-4px); }
+  .graph-card.wide { grid-column:1/-1; }
+
+  .graph-image-wrap {
+    width:100%; aspect-ratio:16/9;
+    background:var(--bg3);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .graph-image-wrap img {
+    width:100%; height:100%; object-fit:cover;
+    transition:transform 0.4s ease;
+  }
+  .graph-card:hover .graph-image-wrap img { transform:scale(1.03); }
+  .graph-placeholder {
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:12px; width:100%; height:100%;
+    color:var(--muted);
+  }
+  .graph-placeholder-icon { font-size:36px; opacity:0.4; }
+  .graph-placeholder-text { font-size:13px; opacity:0.5; }
+  .graph-overlay {
+    position:absolute; inset:0;
+    background:rgba(0,0,0,0.7);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.3s;
+  }
+  .graph-card:hover .graph-overlay { opacity:1; }
+  .overlay-btn {
+    background:var(--green); color:#000;
+    padding:10px 24px; border-radius:100px;
+    font-size:14px; font-weight:600;
+    border:none; cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+  }
+
+  .graph-info { padding:24px; }
+  .graph-tag {
+    display:inline-block;
+    background:var(--bg3); border:1px solid var(--border);
+    color:var(--muted); font-size:11px; font-weight:500;
+    padding:4px 12px; border-radius:100px;
+    letter-spacing:0.5px; text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .graph-title { font-family:'Syne',sans-serif; font-size:19px; font-weight:700; margin-bottom:10px; letter-spacing:-0.3px; }
+  .graph-desc { font-size:14px; color:var(--muted); line-height:1.7; font-weight:300; }
+  .graph-meta {
+    display:flex; gap:16px; margin-top:16px;
+    padding-top:16px; border-top:1px solid var(--border);
+  }
+  .meta-item { font-size:12px; color:var(--muted); }
+  .meta-item strong { color:var(--text); display:block; font-size:13px; margin-bottom:2px; }
+
+  /* LIGHTBOX */
+  .lightbox {
+    position:fixed; inset:0; z-index:1000;
+    background:rgba(0,0,0,0.95);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.3s;
+    padding:40px;
+  }
+  .lightbox.open { opacity:1; pointer-events:all; }
+  .lightbox img { max-width:90vw; max-height:85vh; border-radius:8px; object-fit:contain; }
+  .lightbox-close {
+    position:absolute; top:24px; right:32px;
+    font-size:32px; color:var(--muted);
+    cursor:pointer; transition:color 0.2s;
+    background:none; border:none;
+  }
+  .lightbox-close:hover { color:var(--text); }
+  .lightbox-caption {
+    position:absolute; bottom:32px; left:50%;
+    transform:translateX(-50%);
+    font-family:'Syne',sans-serif; font-size:16px; font-weight:700;
+    color:var(--text); text-align:center;
+  }
+  .lightbox-placeholder {
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    color:var(--muted); text-align:center;
+  }
+  .lightbox-placeholder .big-icon { font-size:64px; opacity:0.3; }
+  .lightbox-placeholder p { font-size:15px; max-width:400px; line-height:1.7; }
+  .lightbox-placeholder code {
+    background:var(--bg2); padding:4px 10px;
+    border-radius:6px; font-size:13px; color:var(--green);
+  }
+
+  .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.5s ease,transform 0.5s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  footer {
+    border-top:1px solid var(--border); padding:48px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;
+  }
+  footer .footer-left { font-size:14px; color:var(--muted); }
+  footer .footer-left strong { color:var(--text); }
+  .footer-team { display:flex; gap:20px; flex-wrap:wrap; }
+  .team-chip { background:var(--bg2); border:1px solid var(--border); border-radius:100px; padding:8px 16px; font-size:13px; color:var(--muted); }
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--bg3); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">SPOTIFY<span> EDA</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="analysis.html">Analysis</a></li>
+    <li><a href="graphs.html" class="active">Graphs</a></li>
+    <li><a href="about.html">About</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="page-label">Data Visualizations</div>
+  <h1 class="page-title">All Graphs</h1>
+  <p class="page-desc">9 charts built with Matplotlib and Seaborn — click any graph to view it full size.</p>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterGraphs('all', this)">All (9)</button>
+  <button class="filter-btn" onclick="filterGraphs('platform', this)">Platform</button>
+  <button class="filter-btn" onclick="filterGraphs('artist', this)">Artist</button>
+  <button class="filter-btn" onclick="filterGraphs('trend', this)">Trends</button>
+  <button class="filter-btn" onclick="filterGraphs('language', this)">Language</button>
+</div>
+
+<div class="graphs-grid">
+
+  <!-- Graph 1 -->
+  <div class="graph-card wide reveal" data-cat="trend" onclick="openLight('top10_songs.png','Top 10 Most Streamed Songs 2024')">
+    <div class="graph-image-wrap">
+      <img src="top10_songs.png" alt="Top 10 Songs" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">🏆</div>
+        <div class="graph-placeholder-text">top10_songs.png — add your exported chart here</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Trend</span>
+      <div class="graph-title">Top 10 Most Streamed Songs of 2024</div>
+      <div class="graph-desc">Animated race bar chart showing the 10 songs with the highest total Spotify streams — Blinding Lights by The Weeknd leads with 4.28 billion streams.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Horizontal bar (animated)</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib + Pillow</div>
+        <div class="meta-item"><strong>Data</strong>Spotify Streams</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 2 -->
+  <div class="graph-card reveal" data-cat="platform" onclick="openLight('platform_battle.png','Platform Battle')">
+    <div class="graph-image-wrap">
+      <img src="platform_battle.png" alt="Platform Battle" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">📊</div>
+        <div class="graph-placeholder-text">platform_battle.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Platform</span>
+      <div class="graph-title">Platform Battle</div>
+      <div class="graph-desc">Spotify vs YouTube vs TikTok vs Apple Music vs Pandora — total stream volume and market share comparison across all platforms.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Bar + Pie</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 3 -->
+  <div class="graph-card reveal" data-cat="trend" onclick="openLight('genre_evolution_timeline.png','Genre Evolution Timeline')">
+    <div class="graph-image-wrap">
+      <img src="genre_evolution_timeline.png" alt="Genre Evolution" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">📈</div>
+        <div class="graph-placeholder-text">genre_evolution_timeline.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Trend</span>
+      <div class="graph-title">Genre / Era Evolution Timeline</div>
+      <div class="graph-desc">How platform dominance shifted from 2018 to 2024 — showing the pre-TikTok era, TikTok rise, and the multi-platform era.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Multi-line</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 4 -->
+  <div class="graph-card reveal" data-cat="artist" onclick="openLight('biggest_collabs_2024.png','Biggest Collaborations')">
+    <div class="graph-image-wrap">
+      <img src="biggest_collabs_2024.png" alt="Biggest Collabs" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">🤝</div>
+        <div class="graph-placeholder-text">biggest_collabs_2024.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Artist</span>
+      <div class="graph-title">Biggest Collaborations of 2024</div>
+      <div class="graph-desc">Top 15 featured-artist collaborations ranked by Spotify streams — extracted using regex pattern matching on track names.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Horizontal bar</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 5 -->
+  <div class="graph-card reveal" data-cat="artist" onclick="openLight('top_albums.png','Top Albums')">
+    <div class="graph-image-wrap">
+      <img src="top_albums.png" alt="Top Albums" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">💿</div>
+        <div class="graph-placeholder-text">top_albums.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Artist</span>
+      <div class="graph-title">Top 15 Most Streamed Albums</div>
+      <div class="graph-desc">Albums ranked by total Spotify streams across all charting tracks — Un Verano Sin Ti and The Tortured Poets Department lead the list.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Horizontal bar</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 6 -->
+  <div class="graph-card reveal" data-cat="language" onclick="openLight('language_distribution.png','Language Distribution')">
+    <div class="graph-image-wrap">
+      <img src="language_distribution.png" alt="Language Distribution" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">🌍</div>
+        <div class="graph-placeholder-text">language_distribution.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Language</span>
+      <div class="graph-title">Language Distribution</div>
+      <div class="graph-desc">Song language detected using the langdetect library — English dominates at 40%, followed by Spanish and other languages.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Pie + Bar</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 7 -->
+  <div class="graph-card reveal" data-cat="artist" onclick="openLight('artist_loyalty.png','Artist Loyalty Index')">
+    <div class="graph-image-wrap">
+      <img src="artist_loyalty.png" alt="Artist Loyalty" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">❤️</div>
+        <div class="graph-placeholder-text">artist_loyalty.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Artist</span>
+      <div class="graph-title">Artist Loyalty Index</div>
+      <div class="graph-desc">Composite loyalty score = Spotify playlist adds ÷ streams + YouTube likes ÷ views + TikTok likes ÷ views. High ratio = loyal fanbase.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Horizontal bar</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 8 -->
+  <div class="graph-card reveal" data-cat="trend" onclick="openLight('release_timing.png','Release Timing Analysis')">
+    <div class="graph-image-wrap">
+      <img src="release_timing.png" alt="Release Timing" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">📅</div>
+        <div class="graph-placeholder-text">release_timing.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Trend</span>
+      <div class="graph-title">Release Timing Analysis</div>
+      <div class="graph-desc">Which months and days of the week produce the most streamed songs? Reveals that Friday releases consistently outperform other days.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Bar + line overlay</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph 9 -->
+  <div class="graph-card reveal" data-cat="platform" onclick="openLight('shazam_discovery.png','Shazam Discovery Rate')">
+    <div class="graph-image-wrap">
+      <img src="shazam_discovery.png" alt="Shazam Discovery" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div class="graph-placeholder" style="display:none">
+        <div class="graph-placeholder-icon">🔍</div>
+        <div class="graph-placeholder-text">shazam_discovery.png</div>
+      </div>
+      <div class="graph-overlay"><button class="overlay-btn">View Full Size</button></div>
+    </div>
+    <div class="graph-info">
+      <span class="graph-tag">Platform</span>
+      <div class="graph-title">Shazam Discovery Rate</div>
+      <div class="graph-desc">Shazam counts vs Spotify streams — quadrant analysis identifying viral hits, organic discoveries, playlist-driven songs and niche tracks.</div>
+      <div class="graph-meta">
+        <div class="meta-item"><strong>Chart type</strong>Scatter / bubble</div>
+        <div class="meta-item"><strong>Library</strong>Matplotlib</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLight(event)">
+  <button class="lightbox-close" onclick="closeLightDirect()">×</button>
+  <div id="lightbox-content"></div>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+</div>
+
+<footer>
+  <div class="footer-left"><strong>Music Streaming Trends EDA</strong><br/>EDA Using Python · Batch 2025–29</div>
+  <div class="footer-team">
+    <span class="team-chip">Drishti Heda</span>
+    <span class="team-chip">Jayvee Shah</span>
+    <span class="team-chip">Jui Dixit</span>
+    <span class="team-chip">Krish Joshi</span>
+  </div>
+</footer>
+
+<script>
+  // Intersection observer
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e,i) => {
+      if(e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.05 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Filter
+  function filterGraphs(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.graph-card').forEach(card => {
+      if(cat === 'all' || card.dataset.cat === cat) {
+        card.style.display = '';
+        if(cat !== 'all' && card.classList.contains('wide')) {
+          card.style.gridColumn = '';
+        }
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Lightbox
+  function openLight(src, title) {
+    const lb = document.getElementById('lightbox');
+    const content = document.getElementById('lightbox-content');
+    const caption = document.getElementById('lightbox-caption');
+    const img = new Image();
+    img.onload = () => {
+      content.innerHTML = '';
+      content.appendChild(img);
+    };
+    img.onerror = () => {
+      content.innerHTML = `<div class="lightbox-placeholder">
+        <div class="big-icon">📊</div>
+        <p>Graph image not loaded yet.<br/>Export your chart from Colab as <code>${src}</code> and place it in the same folder as this HTML file.</p>
+      </div>`;
+    };
+    img.src = src;
+    img.style.cssText = 'max-width:90vw;max-height:80vh;border-radius:8px;object-fit:contain;';
+    caption.textContent = title;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLight(e) {
+    if(e.target === document.getElementById('lightbox')) closeLightDirect();
+  }
+  function closeLightDirect() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightDirect(); });
+</script>
+</body>
+</html>

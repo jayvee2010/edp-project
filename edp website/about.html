@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>About — Spotify EDA 2024</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green:#1DB954; --green-dim:#17a349;
+    --bg:#0a0a0a; --bg2:#111111; --bg3:#1a1a1a;
+    --border:rgba(255,255,255,0.07);
+    --text:#f0f0f0; --muted:#888;
+    --accent1:#FF6B6B; --accent2:#4A90D9; --accent3:#FFB347;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; }
+
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 48px;
+    background:rgba(10,10,10,0.85); backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:var(--green); letter-spacing:-0.5px; }
+  .nav-logo span { color:var(--text); }
+  .nav-links { display:flex; gap:36px; list-style:none; }
+  .nav-links a { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:color 0.2s; }
+  .nav-links a:hover { color:var(--text); }
+  .nav-links a.active { color:var(--green); }
+
+  .page-header {
+    padding:160px 48px 80px;
+    max-width:1200px; margin:0 auto;
+    border-bottom:1px solid var(--border);
+  }
+  .page-label { font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:16px; }
+  .page-title { font-family:'Syne',sans-serif; font-size:clamp(32px,5vw,64px); font-weight:800; letter-spacing:-2px; line-height:1.05; margin-bottom:20px; }
+  .page-desc { font-size:17px; color:var(--muted); max-width:600px; line-height:1.7; font-weight:300; }
+
+  /* TEAM */
+  .team-section {
+    max-width:1200px; margin:0 auto;
+    padding:80px 48px;
+    border-bottom:1px solid var(--border);
+  }
+  .section-label { font-size:12px; font-weight:500; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:16px; }
+  .section-title { font-family:'Syne',sans-serif; font-size:clamp(24px,3.5vw,40px); font-weight:700; letter-spacing:-1px; margin-bottom:48px; }
+
+  .team-grid {
+    display:grid; grid-template-columns:repeat(4,1fr);
+    gap:20px;
+  }
+  .team-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:16px; padding:32px 24px;
+    text-align:center;
+    transition:border-color 0.2s, transform 0.2s;
+    position:relative; overflow:hidden;
+  }
+  .team-card:hover { border-color:rgba(255,255,255,0.15); transform:translateY(-4px); }
+  .team-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    border-radius:16px 16px 0 0;
+  }
+  .team-card:nth-child(1)::before { background:var(--green); }
+  .team-card:nth-child(2)::before { background:var(--accent2); }
+  .team-card:nth-child(3)::before { background:var(--accent1); }
+  .team-card:nth-child(4)::before { background:var(--accent3); }
+
+  .team-avatar {
+    width:72px; height:72px; border-radius:50%;
+    margin:0 auto 20px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-size:28px; font-weight:800;
+  }
+  .team-card:nth-child(1) .team-avatar { background:rgba(29,185,84,0.15); color:var(--green); }
+  .team-card:nth-child(2) .team-avatar { background:rgba(74,144,217,0.15); color:var(--accent2); }
+  .team-card:nth-child(3) .team-avatar { background:rgba(255,107,107,0.15); color:var(--accent1); }
+  .team-card:nth-child(4) .team-avatar { background:rgba(255,179,71,0.15); color:var(--accent3); }
+
+  .team-name { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:6px; }
+  .team-batch { font-size:13px; color:var(--muted); }
+
+  /* TOOLS */
+  .tools-section {
+    max-width:1200px; margin:0 auto;
+    padding:80px 48px;
+    border-bottom:1px solid var(--border);
+  }
+  .tools-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:40px; }
+  .tool-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:12px; padding:24px;
+    display:flex; align-items:flex-start; gap:16px;
+    transition:border-color 0.2s;
+  }
+  .tool-card:hover { border-color:rgba(255,255,255,0.15); }
+  .tool-icon { font-size:28px; flex-shrink:0; }
+  .tool-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:6px; }
+  .tool-desc { font-size:13px; color:var(--muted); line-height:1.6; }
+
+  /* RUBRIC */
+  .rubric-section {
+    max-width:1200px; margin:0 auto;
+    padding:80px 48px;
+    border-bottom:1px solid var(--border);
+  }
+  .rubric-grid { margin-top:40px; display:flex; flex-direction:column; gap:12px; }
+  .rubric-row {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:12px; padding:20px 24px;
+    display:flex; align-items:center; gap:20px;
+  }
+  .rubric-marks {
+    font-family:'Syne',sans-serif; font-size:24px; font-weight:800;
+    color:var(--green); min-width:60px; text-align:center;
+  }
+  .rubric-info { flex:1; }
+  .rubric-title { font-size:15px; font-weight:500; margin-bottom:4px; }
+  .rubric-detail { font-size:13px; color:var(--muted); line-height:1.5; }
+  .rubric-bar-wrap { width:120px; }
+  .rubric-bar {
+    height:6px; background:var(--bg3);
+    border-radius:3px; overflow:hidden;
+  }
+  .rubric-fill {
+    height:100%; background:var(--green);
+    border-radius:3px;
+    transition:width 1s ease;
+  }
+  .rubric-total {
+    background:rgba(29,185,84,0.08);
+    border:1px solid rgba(29,185,84,0.2);
+    border-radius:12px; padding:20px 24px;
+    display:flex; align-items:center; gap:20px;
+    margin-top:4px;
+  }
+  .rubric-total .rubric-marks { font-size:32px; }
+
+  /* DATASET CREDIT */
+  .credit-section {
+    max-width:1200px; margin:0 auto;
+    padding:80px 48px;
+  }
+  .credit-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:16px; padding:40px;
+    display:flex; gap:40px; align-items:center;
+  }
+  .credit-icon { font-size:56px; flex-shrink:0; }
+  .credit-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; margin-bottom:8px; }
+  .credit-text { font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:16px; }
+  .credit-link {
+    display:inline-block;
+    background:rgba(29,185,84,0.1); border:1px solid rgba(29,185,84,0.3);
+    color:var(--green); font-size:14px; font-weight:500;
+    padding:10px 22px; border-radius:100px;
+    text-decoration:none; transition:background 0.2s;
+  }
+  .credit-link:hover { background:rgba(29,185,84,0.2); }
+
+  .reveal { opacity:0; transform:translateY(24px); transition:opacity 0.6s ease,transform 0.6s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  footer {
+    border-top:1px solid var(--border); padding:48px;
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;
+  }
+  footer .footer-left { font-size:14px; color:var(--muted); }
+  footer .footer-left strong { color:var(--text); }
+  .footer-team { display:flex; gap:20px; flex-wrap:wrap; }
+  .team-chip { background:var(--bg2); border:1px solid var(--border); border-radius:100px; padding:8px 16px; font-size:13px; color:var(--muted); }
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--bg3); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">SPOTIFY<span> EDA</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="analysis.html">Analysis</a></li>
+    <li><a href="graphs.html">Graphs</a></li>
+    <li><a href="about.html" class="active">About</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <div class="page-label">The Team</div>
+  <h1 class="page-title">About This<br/>Project</h1>
+  <p class="page-desc">Built as part of the EDA Using Python course, Batch 2025–29. A group project analysing music streaming trends using real-world Spotify data.</p>
+</div>
+
+<!-- TEAM -->
+<div class="team-section reveal">
+  <div class="section-label">Group Members</div>
+  <h2 class="section-title">Meet the team</h2>
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="team-avatar">D</div>
+      <div class="team-name">Drishti Heda</div>
+      <div class="team-batch">Batch 2025–29</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">J</div>
+      <div class="team-name">Jayvee Shah</div>
+      <div class="team-batch">Batch 2025–29</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">J</div>
+      <div class="team-name">Jui Dixit</div>
+      <div class="team-batch">Batch 2025–29</div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">K</div>
+      <div class="team-name">Krish Joshi</div>
+      <div class="team-batch">Batch 2025–29</div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLS -->
+<div class="tools-section reveal">
+  <div class="section-label">Tech Stack</div>
+  <h2 class="section-title">Tools & libraries used</h2>
+  <div class="tools-grid">
+    <div class="tool-card">
+      <div class="tool-icon">🐍</div>
+      <div>
+        <div class="tool-name">Python 3.12</div>
+        <div class="tool-desc">Core programming language for all data processing, analysis and visualization.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">🐼</div>
+      <div>
+        <div class="tool-name">Pandas</div>
+        <div class="tool-desc">Data loading, cleaning, groupby aggregations, and feature engineering.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">🔢</div>
+      <div>
+        <div class="tool-name">NumPy</div>
+        <div class="tool-desc">Statistical computations — percentiles, normalization, outlier detection.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">📊</div>
+      <div>
+        <div class="tool-name">Matplotlib</div>
+        <div class="tool-desc">Primary charting library — bar charts, scatter plots, pie charts, animations.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">🎨</div>
+      <div>
+        <div class="tool-name">Seaborn</div>
+        <div class="tool-desc">Advanced visualizations — heatmaps and styled statistical plots.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">🔤</div>
+      <div>
+        <div class="tool-name">langdetect</div>
+        <div class="tool-desc">Language detection from track names — used for language distribution analysis.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">⚗️</div>
+      <div>
+        <div class="tool-name">scikit-learn</div>
+        <div class="tool-desc">MinMaxScaler for normalizing platform metrics in the loyalty index calculation.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">📓</div>
+      <div>
+        <div class="tool-name">Google Colab</div>
+        <div class="tool-desc">Cloud-based Jupyter notebook environment — no local setup required.</div>
+      </div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">🌐</div>
+      <div>
+        <div class="tool-name">HTML / CSS / JS</div>
+        <div class="tool-desc">This website — built as a bonus deliverable to present findings interactively.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RUBRIC -->
+<div class="rubric-section reveal">
+  <div class="section-label">Project Evaluation</div>
+  <h2 class="section-title">Rubric coverage</h2>
+  <div class="rubric-grid">
+    <div class="rubric-row">
+      <div class="rubric-marks">3</div>
+      <div class="rubric-info">
+        <div class="rubric-title">Title & Objective</div>
+        <div class="rubric-detail">Relevant project title + clear objective statement covering streaming trend analysis</div>
+      </div>
+      <div class="rubric-bar-wrap">
+        <div class="rubric-bar"><div class="rubric-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="rubric-row">
+      <div class="rubric-marks">3</div>
+      <div class="rubric-info">
+        <div class="rubric-title">Dataset Selection & Understanding</div>
+        <div class="rubric-detail">Kaggle dataset selected, source cited, all 29 features documented and understood</div>
+      </div>
+      <div class="rubric-bar-wrap">
+        <div class="rubric-bar"><div class="rubric-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="rubric-row">
+      <div class="rubric-marks">4</div>
+      <div class="rubric-info">
+        <div class="rubric-title">Data Preprocessing</div>
+        <div class="rubric-detail">Pandas loading, null handling, data cleaning, NumPy statistics — all 4 criteria covered</div>
+      </div>
+      <div class="rubric-bar-wrap">
+        <div class="rubric-bar"><div class="rubric-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="rubric-row">
+      <div class="rubric-marks">4</div>
+      <div class="rubric-info">
+        <div class="rubric-title">Exploratory Data Analysis</div>
+        <div class="rubric-detail">Descriptive stats, groupby aggregations, pattern identification across platforms and time</div>
+      </div>
+      <div class="rubric-bar-wrap">
+        <div class="rubric-bar"><div class="rubric-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="rubric-row">
+      <div class="rubric-marks">4</div>
+      <div class="rubric-info">
+        <div class="rubric-title">Data Visualization</div>
+        <div class="rubric-detail">9 charts across 6+ different types — scatter, bar, pie, line, heatmap (removed), animated — all labelled</div>
+      </div>
+      <div class="rubric-bar-wrap">
+        <div class="rubric-bar"><div class="rubric-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CREDIT -->
+<div class="credit-section reveal">
+  <div class="section-label">Data Source</div>
+  <h2 class="section-title" style="margin-bottom:32px;">Dataset credit</h2>
+  <div class="credit-card">
+    <div class="credit-icon">📁</div>
+    <div>
+      <div class="credit-title">Most Streamed Spotify Songs 2024</div>
+      <div class="credit-text">Published on Kaggle by nelgiriyewithana. Contains global chart data for 4,600 songs across 8 streaming platforms — Spotify, YouTube, TikTok, Apple Music, Pandora, Soundcloud, Deezer, and Amazon Music. 29 features per track including stream counts, playlist reach, Shazam data, and release metadata.</div>
+      <a href="https://www.kaggle.com/datasets/nelgiriyewithana/most-streamed-spotify-songs-2024" target="_blank" class="credit-link">View on Kaggle →</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left"><strong>Music Streaming Trends EDA</strong><br/>EDA Using Python · Batch 2025–29</div>
+  <div class="footer-team">
+    <span class="team-chip">Drishti Heda</span>
+    <span class="team-chip">Jayvee Shah</span>
+    <span class="team-chip">Jui Dixit</span>
+    <span class="team-chip">Krish Joshi</span>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Animate rubric bars on scroll
+  const barObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting) {
+        e.target.querySelectorAll('.rubric-fill').forEach(bar => {
+          bar.style.width = bar.style.width;
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.rubric-grid').forEach(el => barObserver.observe(el));
+</script>
+</body>
+</html>
